@@ -38,17 +38,13 @@
           cidr_blocks:
             - "185.41.248.158/32"
 
-    - name: Create terraform data directory
-      file:
-        path: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
-        state: directory
-
     - name: create config-map-aws-auth.yaml
       shell: "terraform output config-map-aws-auth > config-map-aws-auth.yaml"
       args:
         chdir: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
       environment:
         AWS_DEFAULT_REGION: "{{ aws_region }}"
+      tags: apply
 
     - name: create config-map-aws-auth.yaml
       shell: "terraform output kubeconfig > ~/.kube/config-{{ eks_name }}"
@@ -56,6 +52,7 @@
         chdir: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
       environment:
         AWS_DEFAULT_REGION: "{{ aws_region }}"
+      tags: apply
 
     - name: create config-map-aws-auth.yaml
       shell: "kubectl apply -f config-map-aws-auth.yaml"
@@ -64,5 +61,6 @@
       environment:
         KUBECONFIG: "~/.kube/config-{{ eks_name }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
+      tags: apply
 
 
