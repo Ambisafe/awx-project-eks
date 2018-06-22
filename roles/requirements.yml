@@ -1,0 +1,4 @@
+# Ambisafe supported roles
+- name: terraform-aws
+  src: https://github.com/Ambisafe/ansible-role-tf-aws.git
+  version: master

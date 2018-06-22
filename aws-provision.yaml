@@ -1,0 +1,16 @@
+- name: provision ECS cluster
+  hosts: all
+  gather_facts: False
+  
+  tasks:
+  
+    - name: ssh
+      block:
+
+      - name: temporary add devops public keys
+        authorized_key:
+          user: ec2-user
+          state: present
+          key: "{{ item }}"
+        with_items: "{{ devops_ssh_public_keys }}"
+        when: devops_ssh_public_keys is defined

@@ -1,0 +1,68 @@
+- name: install eks cluster
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    aws_region: us-east-1
+
+    terraform_data_dir: "/opt/terraform/data"
+    terraform_arg: "{{ terraform_arg }}"
+
+    project_type: "{{ project_type }}"
+    project_name: "{{ project_name }}"
+    project_deployment_environment: "{{ project_env_name }}"
+    organization_name: "{{ organization_name }}"
+
+  environment:
+
+    TF_LOG: "DEBUG"
+    TF_LOG_PATH: "/tmp/terraform.log"
+
+  tasks:
+
+    - include_role:
+        name: terraform-aws
+      vars:
+
+        project_eks: true
+
+        eks_name: "tf-eks-{{ project_type }}"
+        eks_min_size: 1
+        eks_max_size: 2
+        eks_desired_capacity: 2
+        eks_instance_type: "m4.large"
+        eks_sg_ingress:
+        - from_port: 443
+          to_port: 443
+          protocol: "tcp"
+          cidr_blocks:
+            - "185.41.248.158/32"
+
+    - name: Create terraform data directory
+      file:
+        path: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
+        state: directory
+
+    - name: create config-map-aws-auth.yaml
+      shell: "terraform output config-map-aws-auth > config-map-aws-auth.yaml"
+      args:
+        chdir: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
+      environment:
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: create config-map-aws-auth.yaml
+      shell: "terraform output kubeconfig > ~/.kube/config-{{ eks_name }}"
+      args:
+        chdir: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
+      environment:
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: create config-map-aws-auth.yaml
+      shell: "kubectl apply -f config-map-aws-auth.yaml"
+      args:
+        chdir: "{{ terraform_data_dir }}/{{ organization_name }}/{{ project_type }}/{{ project_name }}/{{ project_deployment_environment }}"
+      environment:
+        KUBECONFIG: "~/.kube/config-{{ eks_name }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+
